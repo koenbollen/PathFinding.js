@@ -2,11 +2,10 @@
 var PCG = {
     init: function()
     {
-        this.type = 0;
+        this.type = 1;
     },
     next: function( width, height )
     {
-        console.log( "PCG next" );
         var grid = new PF.Grid( width, height );
 
         switch( this.type )
@@ -23,7 +22,7 @@ var PCG = {
         }
 
         this.type += 1;
-        this.type %= 1;
+        this.type %= 2;
 
         return grid;
     },
@@ -100,6 +99,81 @@ var PCG = {
 
     generateRooms: function( grid )
     {
+        var split = function( node, depth )
+        {
+            if( Math.random() > 0.5 )
+            {
+                var left = Math.floor(node.width * (Math.random() * .2 + .4));
+                var right = node.width - left;
+                node.t = 0; // horizontal
+                node.a = {x: node.x, y: node.y, width: left, height: node.height, a: null, b: null, p: null};
+                node.b = {x: node.x + left, y: node.y, width: right, height: node.height, a: null, b: null, p: null};
+            } else {
+                var left = Math.floor(node.height * (Math.random() * .2 + .4));
+                var right = node.height - left;
+                node.t = 1;
+                node.a = {x: node.x, y: node.y, width: node.width, height: left, a: null, b: null, p: null};
+                node.b = {x: node.x, y: node.y + left, width: node.width, height: right, a: null, b: null, p: null};
+            }
+            node.a.p = node;
+            node.b.p = node;
+            node.a.s = node.b;
+            node.b.s = node.a;
+            if( depth > 1 )
+            {
+                split( node.a, depth-1 );
+                split( node.b, depth-1 );
+            }
+        }
+        var findleaf = function( node, leafs )
+        {
+            if( node.a == null && node.b == null )
+            {
+                leafs.push( node );
+            } else {
+                findleaf( node.a, leafs );
+                findleaf( node.b, leafs );
+            }
+        }
+        var breakwalls = function( node )
+        {
+            if( node.b == null )
+                return;
+            if( node.t == 0 )
+            {
+                var y = 2;
+                grid.setWalkableAt(node.b.x, node.b.y+y, true);
+            } else {
+                var x = 2;
+                grid.setWalkableAt(node.b.x+x, node.b.y, true);
+            }
+            breakwalls(node.a);
+            breakwalls(node.b);
+        }
+
+        var width = grid.width;
+        var height = grid.height;
+
+        var dungeon = { x: 0, y: 0, width: width-1, height: height-1, a: null, b: null, p: null, s: null};
+        split( dungeon, 3 );
+        var leafs = [];
+        findleaf( dungeon, leafs );
+
+        for( var x = 0; x < width; x++ )
+            grid.setWalkableAt(x, height-1, false);
+        for( var y = 0; y < height; y++ )
+            grid.setWalkableAt(width-1, y, false);
+
+        leafs.forEach(function(e){
+            for( var x = 0; x < e.width; x++ )
+                grid.setWalkableAt(e.x+x, e.y, false);
+            for( var y = 0; y < e.height; y++ )
+                grid.setWalkableAt(e.x, e.y + y, false);
+        });
+
+        breakwalls( dungeon );
+
+
     },
 
 
