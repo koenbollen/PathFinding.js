@@ -9,6 +9,7 @@ $(document).ready(function() {
     });
 
     // initialize visualization
+    PCG.init();
     Panel.init();
     Controller.init();
 });

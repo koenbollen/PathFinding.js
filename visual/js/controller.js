@@ -216,6 +216,11 @@ $.extend(Controller, {
             text: 'Clear Walls',
             enabled: true,
             callback: $.proxy(this.reset, this),
+        }, {
+            id: 4,
+            text: 'Create Random',
+            enabled: true,
+            callback: $.proxy(this.generate, this),
         });
         // => [starting, draggingStart, draggingEnd, drawingStart, drawingEnd]
     },
@@ -365,6 +370,21 @@ $.extend(Controller, {
     clearAll: function() {
         this.clearFootprints();
         View.clearBlockedNodes();
+    },
+    generate: function() {
+        this.clearFootprints();
+        View.clearBlockedNodes();
+        this.grid = PCG.next(this.gridSize[0], this.gridSize[1]);
+        for( var y = 0; y < this.gridSize[1]; y++ )
+        {
+            for( var x = 0; x < this.gridSize[0]; x++ )
+            {
+                if( !this.grid.isWalkableAt(x, y) )
+                {
+                    View.setAttributeAt(x, y, 'walkable', false);
+                }
+            }
+        }
     },
     buildNewGrid: function() {
         this.grid = new PF.Grid(this.gridSize[0], this.gridSize[1]);
